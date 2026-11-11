@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { sound } from './sound';
 import { BLOCK_COLOR_LIST, BLOCK_PALETTE, BlockColorId } from './types';
 
-export const GAME_ICON_PATH = '/assets/aistudio/1793986109511_c82dfa3d.png';
+export const GAME_ICON_PATH = './pwa-512x512.png';
 
 interface IntroSequenceProps {
   onComplete: () => void;

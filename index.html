@@ -14,9 +14,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Cube Crush" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="./pwa-192x192.png" />
     <meta name="google-adsense-account" content="ca-pub-8252748238984276" />
     <script
       async
@@ -28,9 +28,9 @@
       window.adBreak = window.adConfig = function (o) {
         window.adsbygoogle.push(o);
       };
-      if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in navigator && !window.location.hostname.startsWith('ais-dev-')) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/sw.js').catch(function () {});
+          navigator.serviceWorker.register('./sw.js').catch(function () {});
         });
       }
     </script>
@@ -38,9 +38,27 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Outfit:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
   </head>
-  <body>
+  <body style="background-color: #122259; margin: 0;">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Automatic fallback when raw repository root is served on GitHub Pages without running Vite build
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          var root = document.getElementById('root');
+          if (root && root.children.length === 0) {
+            var css = document.createElement('link');
+            css.rel = 'stylesheet';
+            css.href = './public/gh-bundle.css';
+            document.head.appendChild(css);
+
+            var js = document.createElement('script');
+            js.type = 'module';
+            js.src = './public/gh-bundle.js';
+            document.body.appendChild(js);
+          }
+        }, 450);
+      });
+    </script>
   </body>
 </html>
-
