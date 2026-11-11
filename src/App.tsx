@@ -12,7 +12,6 @@ import {
   BoosterRewardType,
   RewardedAdModal,
 } from './game/RewardedAdModal';
-import { ApkExportModal } from './game/ApkExportModal';
 import { FixedBannerAd } from './game/FixedBannerAd';
 import { InterstitialAdModal } from './game/InterstitialAdModal';
 import { sound } from './game/sound';
@@ -294,7 +293,6 @@ export default function App() {
   const [interstitialAfterAction, setInterstitialAfterAction] = useState<(() => void) | null>(
     null
   );
-  const [showDevExport, setShowDevExport] = useState<boolean>(false);
 
   // Refresh 24-hour reset countdown and auto-rotate missions at midnight
   useEffect(() => {
@@ -631,16 +629,6 @@ export default function App() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {import.meta.env.DEV && (
-                <button
-                  type="button"
-                  onClick={() => setShowDevExport(true)}
-                  className="px-2.5 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-display font-extrabold text-[11px] transition-colors cursor-pointer whitespace-nowrap"
-                  title="Only visible in AI Studio Editor — automatically removed in ZIP & Netlify build"
-                >
-                  ⬇ Editor ZIP
-                </button>
-              )}
               <button
                 type="button"
                 onClick={handleToggleMute}
@@ -1018,11 +1006,6 @@ export default function App() {
             nextAction();
           }}
         />
-      )}
-
-      {/* AI STUDIO DEV EDITOR ONLY EXPORT MODAL (Completely stripped out in production ZIP/Netlify builds) */}
-      {import.meta.env.DEV && showDevExport && (
-        <ApkExportModal onClose={() => setShowDevExport(false)} />
       )}
 
       {/* FIXED-SIZE 320x50 BANNER AD (ca-app-pub-3940256099942544/6300978111) */}
