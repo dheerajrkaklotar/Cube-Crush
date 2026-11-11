@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Block Blast! — Tactile 8×8 Block Puzzle Arcade</title>
+    <meta name="description" content="A vibrant 8x8 tactile block puzzle game featuring Classic endless high-score chasing and Adventure gem-collection levels with explosive line-clear combos." />
+    <meta property="og:title" content="Block Blast! — Tactile 8×8 Block Puzzle Arcade" />
+    <meta property="og:description" content="A vibrant 8x8 tactile block puzzle game featuring Classic endless high-score chasing and Adventure gem-collection levels with explosive line-clear combos." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#122259" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Cube Crush" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+    <meta name="google-adsense-account" content="ca-pub-8252748238984276" />
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8252748238984276"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adBreak = window.adConfig = function (o) {
+        window.adsbygoogle.push(o);
+      };
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Outfit:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

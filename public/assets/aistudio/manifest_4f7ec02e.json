@@ -1,0 +1,11 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Cube Crush",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Cube Crush",
+  "start_url": "/https://dazzling-choux-1e0e99.netlify.app",
+  "theme_color": "#ffffff"
+}

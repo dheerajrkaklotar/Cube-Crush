@@ -1,0 +1,6 @@
+{
+  "name": "Block Blast! Puzzle Arcade",
+  "description": "A vibrant 8x8 tactile block puzzle game featuring Classic endless high-score chasing and Adventure gem-collection levels with explosive line-clear combos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
