@@ -3,15 +3,18 @@ import { sound } from './sound';
 
 export type BoosterRewardType = 'ROTATE' | 'BOMB';
 
-// Hardcoded Google AdSense Publisher ID & Official AdMob Demo Ad Unit IDs
+// Hardcoded Real Google AdSense & AdMob Production IDs
 export const GOOGLE_ADSENSE_PUBLISHER_ID = 'pub-8252748238984276';
 export const GOOGLE_ADSENSE_CLIENT_ID = 'ca-pub-8252748238984276';
+export const GOOGLE_ADMOB_APP_ID = 'ca-app-pub-8252748238984276~5299537409';
 
-export const DEFAULT_BANNER_AD_UNIT_ID = 'ca-app-pub-3940256099942544/6300978111';
+// Real Production AdMob Ad Unit IDs provided by user
+export const DEFAULT_BANNER_AD_UNIT_ID = 'ca-app-pub-8252748238984276/8476685886';
+export const DEFAULT_REWARDED_AD_UNIT_ID = 'ca-app-pub-8252748238984276/1911277534';
 export const DEFAULT_INTERSTITIAL_AD_UNIT_ID = 'ca-app-pub-3940256099942544/1033173712';
-export const DEFAULT_REWARDED_AD_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917';
 
 export interface AdConfig {
+  appId: string;
   publisherId: string;
   bannerAdUnitId: string;
   interstitialAdUnitId: string;
@@ -21,7 +24,7 @@ export interface AdConfig {
   totalImpressions: number;
 }
 
-const AD_CONFIG_KEY = 'cube_crush_ad_monetization_config';
+const AD_CONFIG_KEY = 'cube_crush_ad_monetization_config_v2';
 
 export function loadAdConfig(): AdConfig {
   try {
@@ -29,14 +32,13 @@ export function loadAdConfig(): AdConfig {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<AdConfig>;
       return {
+        appId: GOOGLE_ADMOB_APP_ID,
         publisherId: GOOGLE_ADSENSE_CLIENT_ID,
-        bannerAdUnitId:
-          parsed.bannerAdUnitId?.trim() || DEFAULT_BANNER_AD_UNIT_ID,
+        bannerAdUnitId: DEFAULT_BANNER_AD_UNIT_ID,
         interstitialAdUnitId:
           parsed.interstitialAdUnitId?.trim() || DEFAULT_INTERSTITIAL_AD_UNIT_ID,
-        rewardedAdUnitId:
-          parsed.rewardedAdUnitId?.trim() || DEFAULT_REWARDED_AD_UNIT_ID,
-        adSlotId: parsed.adSlotId?.trim() || '5224354917',
+        rewardedAdUnitId: DEFAULT_REWARDED_AD_UNIT_ID,
+        adSlotId: '1911277534',
         directAdUrl: parsed.directAdUrl?.trim() || '',
         totalImpressions: Number(parsed.totalImpressions) || 0,
       };
@@ -45,11 +47,12 @@ export function loadAdConfig(): AdConfig {
     // ignore
   }
   return {
+    appId: GOOGLE_ADMOB_APP_ID,
     publisherId: GOOGLE_ADSENSE_CLIENT_ID,
     bannerAdUnitId: DEFAULT_BANNER_AD_UNIT_ID,
     interstitialAdUnitId: DEFAULT_INTERSTITIAL_AD_UNIT_ID,
     rewardedAdUnitId: DEFAULT_REWARDED_AD_UNIT_ID,
-    adSlotId: '5224354917',
+    adSlotId: '1911277534',
     directAdUrl: '',
     totalImpressions: 0,
   };
@@ -61,7 +64,10 @@ export function saveAdConfig(config: AdConfig): void {
       AD_CONFIG_KEY,
       JSON.stringify({
         ...config,
+        appId: GOOGLE_ADMOB_APP_ID,
         publisherId: GOOGLE_ADSENSE_CLIENT_ID,
+        bannerAdUnitId: DEFAULT_BANNER_AD_UNIT_ID,
+        rewardedAdUnitId: DEFAULT_REWARDED_AD_UNIT_ID,
       })
     );
   } catch {
@@ -73,6 +79,7 @@ export function recordAdImpression(): AdConfig {
   const current = loadAdConfig();
   const updated: AdConfig = {
     ...current,
+    appId: GOOGLE_ADMOB_APP_ID,
     publisherId: GOOGLE_ADSENSE_CLIENT_ID,
     totalImpressions: current.totalImpressions + 1,
   };
@@ -96,23 +103,19 @@ export function RewardedAdModal({
   const [completed, setCompleted] = useState<boolean>(false);
   const [adConfig] = useState<AdConfig>(() => loadAdConfig());
 
-  const rewardedUnitId =
-    adConfig.rewardedAdUnitId || DEFAULT_REWARDED_AD_UNIT_ID;
-  const slotId = rewardedUnitId.includes('/')
-    ? rewardedUnitId.split('/')[1]
-    : adConfig.adSlotId || '5224354917';
-  const isGoogleTestUnit = rewardedUnitId.startsWith(
-    'ca-app-pub-3940256099942544/'
-  );
+  const rewardedUnitId = DEFAULT_REWARDED_AD_UNIT_ID;
+  const slotId = rewardedUnitId.split('/')[1] || '1911277534';
 
   useEffect(() => {
     const win = window as unknown as {
       adsbygoogle?: unknown[];
       adBreak?: (opts: Record<string, unknown>) => void;
       Android?: {
+        initializeAdMob?: (appId: string) => void;
         showRewardedAd?: (id?: string) => void;
       };
       admob?: {
+        start?: () => Promise<void>;
         rewardvideo?: {
           config?: (opts: { id: string }) => void;
           prepare?: () => void;
@@ -122,13 +125,24 @@ export function RewardedAdModal({
           load?: (opts: { id: string }) => Promise<void>;
           show?: () => Promise<void>;
         };
+        RewardedAd?: new (opts: { adUnitId: string }) => {
+          load: () => Promise<void>;
+          show: () => Promise<void>;
+        };
       };
     };
 
-    // 1. Trigger Native Android AdMob Full-Screen Rewarded Ad (ca-app-pub-3940256099942544/5224354917)
+    // 1. Trigger Real Native Android AdMob Full-Screen Rewarded Ad (ca-app-pub-8252748238984276/1911277534)
     try {
+      win.Android?.initializeAdMob?.(GOOGLE_ADMOB_APP_ID);
       if (win.Android?.showRewardedAd) {
         win.Android.showRewardedAd(rewardedUnitId);
+      } else if (win.admob?.RewardedAd) {
+        const rewarded = new win.admob.RewardedAd({ adUnitId: rewardedUnitId });
+        rewarded
+          .load()
+          .then(() => rewarded.show())
+          .catch(() => {});
       } else if (win.admob?.rewardvideo) {
         win.admob.rewardvideo.config?.({ id: rewardedUnitId });
         win.admob.rewardvideo.prepare?.();
@@ -143,7 +157,7 @@ export function RewardedAdModal({
       // Ignore if native APK bridge is not present
     }
 
-    // 2. Push full-screen slot to adsbygoogle
+    // 2. Push full-screen real ad slot to Google AdSense / AdMob Web
     try {
       (win.adsbygoogle = win.adsbygoogle || []).push({});
     } catch {
@@ -197,7 +211,7 @@ export function RewardedAdModal({
       <div className="w-full flex items-center justify-between px-4 sm:px-6 py-3.5 bg-[#0B1433] border-b border-sky-500/25 z-30">
         <div className="flex items-center gap-2.5">
           <span className="px-2.5 py-1 rounded-md bg-amber-400 text-slate-950 font-mono-tabular text-xs font-black uppercase">
-            {isGoogleTestUnit ? 'TEST REWARDED VIDEO AD' : 'REWARDED VIDEO AD'}
+            REWARDED VIDEO AD
           </span>
           <span className="text-xs sm:text-sm font-bold text-sky-100">
             {completed
@@ -225,7 +239,7 @@ export function RewardedAdModal({
         )}
       </div>
 
-      {/* Center Full-Screen Rewarded Video Ad Viewport (ca-app-pub-3940256099942544/5224354917) */}
+      {/* Center Full-Screen Rewarded Video Ad Viewport (ca-app-pub-8252748238984276/1911277534) */}
       <div className="relative flex-1 w-full flex flex-col items-center justify-center p-6 text-center overflow-hidden bg-gradient-to-b from-[#091230] via-[#0F1E4D] to-[#081029]">
         {adConfig.directAdUrl ? (
           <iframe
@@ -236,24 +250,20 @@ export function RewardedAdModal({
           />
         ) : (
           <>
+            {/* Live Real Google AdMob / AdSense Slot */}
             <ins
               className="adsbygoogle absolute inset-0 z-20"
               style={{ display: 'block', width: '100%', height: '100%' }}
-              data-ad-client={
-                isGoogleTestUnit
-                  ? 'ca-pub-3940256099942544'
-                  : GOOGLE_ADSENSE_CLIENT_ID
-              }
+              data-ad-client={GOOGLE_ADSENSE_CLIENT_ID}
               data-ad-slot={slotId}
               data-ad-unit={rewardedUnitId}
+              data-admob-app-id={GOOGLE_ADMOB_APP_ID}
               data-ad-format="auto"
               data-full-width-responsive="true"
-              {...(isGoogleTestUnit ? { 'data-adtest': 'on' } : {})}
             />
 
-            {/* Full-Screen Google AdMob Rewarded Video Showcase */}
+            {/* Full-Screen Rewarded Video Backdrop while Real Ad Loads/Plays */}
             <div className="relative z-10 w-full max-w-md flex flex-col items-center justify-center gap-5 pointer-events-none">
-              {/* Countdown Ring / Rewarded Video Play Icon */}
               <div className="relative w-24 h-24 rounded-full bg-amber-400/15 border-4 border-amber-400 flex items-center justify-center shadow-[0_0_40px_rgba(251,191,36,0.35)]">
                 {completed ? (
                   <span className="font-display font-black text-4xl text-emerald-400">
@@ -268,23 +278,14 @@ export function RewardedAdModal({
 
               <div className="flex flex-col items-center gap-2">
                 <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-mono-tabular text-xs font-black uppercase tracking-wider">
-                  Full-Screen Rewarded Video Ad
+                  Sponsored Rewarded Video
                 </span>
                 <h2 className="font-display font-black text-3xl sm:text-4xl text-white drop-shadow">
-                  {completed ? 'Reward Unlocked!' : 'Nice job! Test Ad Playing'}
+                  {completed ? 'Reward Unlocked!' : `Watch Ad for ${rewardLabel}`}
                 </h2>
                 <p className="text-sm sm:text-base text-sky-100/90 max-w-sm leading-relaxed">
-                  You are displaying a <strong>Full-Screen Rewarded Video Ad</strong> from Google AdMob.
+                  Watch this short sponsored video to earn <strong>{rewardLabel}</strong> for your game.
                 </p>
-              </div>
-
-              <div className="w-full rounded-2xl bg-[#0A132C]/90 border border-sky-400/40 px-4 py-3 flex flex-col items-center gap-1 shadow-lg">
-                <span className="text-[11px] uppercase tracking-wider font-bold text-sky-300/75">
-                  Active Rewarded Ad Unit ID
-                </span>
-                <span className="font-mono-tabular text-xs sm:text-sm font-bold text-amber-300 break-all">
-                  {rewardedUnitId}
-                </span>
               </div>
             </div>
           </>
