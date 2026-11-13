@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Block Blast! — Tactile 8×8 Block Puzzle Arcade</title>
+    <meta name="description" content="A vibrant 8x8 tactile block puzzle game featuring Classic endless high-score chasing and Adventure gem-collection levels with explosive line-clear combos." />
+    <meta property="og:title" content="Block Blast! — Tactile 8×8 Block Puzzle Arcade" />
+    <meta property="og:description" content="A vibrant 8x8 tactile block puzzle game featuring Classic endless high-score chasing and Adventure gem-collection levels with explosive line-clear combos." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#122259" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Cube Crush" />
+    <link rel="manifest" href="./assets/manifest-C-2_eXSo.json" />
+    <link rel="apple-touch-icon" href="./assets/apple-touch-icon-Bd0iK5E2.png" />
+    <link rel="icon" type="image/png" href="./assets/pwa-192x192-BXFfGFbX.png" />
+    <meta name="google-adsense-account" content="ca-pub-8252748238984276" />
+    <meta name="google-admob-app-id" content="ca-app-pub-8252748238984276~5299537409" />
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8252748238984276"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      window.ADMOB_CONFIG = {
+        appId: 'ca-app-pub-8252748238984276~5299537409',
+        bannerAdUnitId: 'ca-app-pub-8252748238984276/8476685886',
+        rewardedAdUnitId: 'ca-app-pub-8252748238984276/1911277534',
+        interstitialAdUnitId: 'ca-app-pub-3940256099942544/1033173712'
+      };
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adBreak = window.adConfig = function (o) {
+        window.adsbygoogle.push(o);
+      };
+      if ('serviceWorker' in navigator && !window.location.hostname.startsWith('ais-dev-')) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('./sw.js').catch(function () {});
+        });
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&family=Outfit:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="./assets/index-DbFR60RJ.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-C2h1jM1I.css">
+  </head>
+  <body style="background-color: #122259; margin: 0;">
+    <div id="root"></div>
+    <script>
+      // Automatic fallback when raw repository root is served on GitHub Pages without running Vite build
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          var root = document.getElementById('root');
+          if (root && root.children.length === 0) {
+            var css = document.createElement('link');
+            css.rel = 'stylesheet';
+            css.href = './public/gh-bundle.css';
+            document.head.appendChild(css);
+
+            var js = document.createElement('script');
+            js.type = 'module';
+            js.src = './public/gh-bundle.js';
+            document.body.appendChild(js);
+          }
+        }, 450);
+      });
+    </script>
+  </body>
+</html>
