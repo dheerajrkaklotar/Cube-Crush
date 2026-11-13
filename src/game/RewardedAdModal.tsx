@@ -185,6 +185,16 @@ export function RewardedAdModal({
       }
     }
 
+    const handleNativeRewardEarned = () => {
+      recordAdImpression();
+      setCompleted(true);
+      setSecondsLeft(0);
+      sound.playCollectible();
+      onRewardEarned(rewardType);
+    };
+
+    window.addEventListener('admob-reward-earned', handleNativeRewardEarned);
+
     const interval = window.setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
@@ -198,8 +208,11 @@ export function RewardedAdModal({
       });
     }, 1000);
 
-    return () => window.clearInterval(interval);
-  }, [onCancel, rewardType, rewardedUnitId]);
+    return () => {
+      window.removeEventListener('admob-reward-earned', handleNativeRewardEarned);
+      window.clearInterval(interval);
+    };
+  }, [onCancel, onRewardEarned, rewardType, rewardedUnitId]);
 
   const progressPct = Math.round(((AD_DURATION - secondsLeft) / AD_DURATION) * 100);
   const rewardLabel =

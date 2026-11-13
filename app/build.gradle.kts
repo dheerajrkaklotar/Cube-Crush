@@ -44,4 +44,5 @@ android {
 
 dependencies {
     implementation(libs.androidx.webkit)
+    implementation(libs.play.services.ads)
 }

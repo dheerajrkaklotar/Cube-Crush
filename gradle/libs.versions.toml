@@ -1,9 +1,11 @@
 [versions]
 agp = "9.1.1"
 webkit = "1.12.1"
+playServicesAds = "23.6.0"
 
 [libraries]
 androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
