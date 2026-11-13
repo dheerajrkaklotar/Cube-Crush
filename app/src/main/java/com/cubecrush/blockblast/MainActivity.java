@@ -3,7 +3,10 @@ package com.cubecrush.blockblast;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,11 +20,13 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.webkit.WebViewAssetLoader;
 
 import com.google.android.gms.ads.AdError;
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
@@ -41,12 +46,19 @@ public class MainActivity extends Activity {
     public static final String REWARDED_AD_UNIT_ID = "ca-app-pub-8252748238984276/1911277534";
     public static final String INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712";
 
+    // Official AdMob fallback units in case a newly created unit returns NO_FILL during initial AdMob warm-up
+    private static final String FALLBACK_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111";
+    private static final String FALLBACK_REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
+
     private WebView webView;
-    private AdView bannerAdView;
+    private FrameLayout bannerContainer;
+    private AdView primaryBannerAdView;
+    private AdView fallbackBannerAdView;
     private RewardedAd rewardedAd;
     private InterstitialAd interstitialAd;
     private boolean isLoadingRewarded = false;
     private boolean isLoadingInterstitial = false;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
@@ -67,6 +79,7 @@ public class MainActivity extends Activity {
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         );
 
+        // Use a vertical LinearLayout or layered FrameLayout so the bottom 320x50 Banner Ad is always on top and never occluded by WebView
         FrameLayout rootLayout = new FrameLayout(this);
         rootLayout.setBackgroundColor(Color.parseColor("#122259"));
 
@@ -78,16 +91,18 @@ public class MainActivity extends Activity {
         );
         rootLayout.addView(webView, webParams);
 
-        // Native 320x50 AdMob Banner Ad docked at the bottom center of the screen
-        bannerAdView = new AdView(this);
-        bannerAdView.setAdSize(AdSize.BANNER);
-        bannerAdView.setAdUnitId(BANNER_AD_UNIT_ID);
-        FrameLayout.LayoutParams bannerParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+        // Dedicated bottom container for the Native 320x50 Banner Ad with top elevation
+        bannerContainer = new FrameLayout(this);
+        bannerContainer.setBackgroundColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            bannerContainer.setElevation(100f);
+        }
+        FrameLayout.LayoutParams containerParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        bannerParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        rootLayout.addView(bannerAdView, bannerParams);
+        containerParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        rootLayout.addView(bannerContainer, containerParams);
 
         setContentView(rootLayout);
 
@@ -126,10 +141,79 @@ public class MainActivity extends Activity {
 
     private void loadNativeBannerAd() {
         runOnUiThread(() -> {
-            if (bannerAdView != null) {
-                AdRequest adRequest = new AdRequest.Builder().build();
-                bannerAdView.loadAd(adRequest);
+            if (bannerContainer == null) {
+                return;
             }
+
+            if (primaryBannerAdView == null) {
+                primaryBannerAdView = new AdView(MainActivity.this);
+                primaryBannerAdView.setAdSize(AdSize.BANNER);
+                primaryBannerAdView.setAdUnitId(BANNER_AD_UNIT_ID);
+
+                FrameLayout.LayoutParams adParams = new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                adParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+                bannerContainer.addView(primaryBannerAdView, adParams);
+
+                primaryBannerAdView.setAdListener(new AdListener() {
+                    @Override
+                    public void onAdLoaded() {
+                        if (fallbackBannerAdView != null) {
+                            fallbackBannerAdView.setVisibility(View.GONE);
+                        }
+                        primaryBannerAdView.setVisibility(View.VISIBLE);
+                        bannerContainer.bringToFront();
+                        notifyJsBannerLoaded();
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        // If the real Banner Ad unit returns NO_FILL while warming up in AdMob,
+                        // display fallback native Banner AdView and schedule a retry of the real unit.
+                        loadFallbackNativeBannerAd();
+                        mainHandler.postDelayed(() -> {
+                            if (!isFinishing() && primaryBannerAdView != null) {
+                                primaryBannerAdView.loadAd(new AdRequest.Builder().build());
+                            }
+                        }, 45000);
+                    }
+                });
+            }
+
+            bannerContainer.bringToFront();
+            primaryBannerAdView.loadAd(new AdRequest.Builder().build());
+        });
+    }
+
+    private void loadFallbackNativeBannerAd() {
+        runOnUiThread(() -> {
+            if (bannerContainer == null || isFinishing()) {
+                return;
+            }
+            if (fallbackBannerAdView == null) {
+                fallbackBannerAdView = new AdView(MainActivity.this);
+                fallbackBannerAdView.setAdSize(AdSize.BANNER);
+                fallbackBannerAdView.setAdUnitId(FALLBACK_BANNER_AD_UNIT_ID);
+
+                FrameLayout.LayoutParams fallbackParams = new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                fallbackParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+                bannerContainer.addView(fallbackBannerAdView, fallbackParams);
+
+                fallbackBannerAdView.setAdListener(new AdListener() {
+                    @Override
+                    public void onAdLoaded() {
+                        fallbackBannerAdView.setVisibility(View.VISIBLE);
+                        bannerContainer.bringToFront();
+                        notifyJsBannerLoaded();
+                    }
+                });
+            }
+            fallbackBannerAdView.loadAd(new AdRequest.Builder().build());
         });
     }
 
@@ -154,6 +238,9 @@ public class MainActivity extends Activity {
                 public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                     rewardedAd = null;
                     isLoadingRewarded = false;
+                    if (!FALLBACK_REWARDED_AD_UNIT_ID.equals(targetId)) {
+                        preloadRewardedAd(FALLBACK_REWARDED_AD_UNIT_ID);
+                    }
                 }
             });
         });
@@ -171,19 +258,18 @@ public class MainActivity extends Activity {
                     public void onAdDismissedFullScreenContent() {
                         rewardedAd = null;
                         notifyJsRewardDismissed();
-                        preloadRewardedAd(targetId);
+                        preloadRewardedAd(REWARDED_AD_UNIT_ID);
                     }
 
                     @Override
                     public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
                         rewardedAd = null;
-                        preloadRewardedAd(targetId);
+                        preloadRewardedAd(REWARDED_AD_UNIT_ID);
                     }
                 });
 
                 rewardedAd.show(MainActivity.this, rewardItem -> notifyJsRewardEarned());
             } else {
-                // Load and immediately show as soon as ready
                 AdRequest adRequest = new AdRequest.Builder().build();
                 RewardedAd.load(MainActivity.this, targetId, adRequest, new RewardedAdLoadCallback() {
                     @Override
@@ -194,13 +280,13 @@ public class MainActivity extends Activity {
                             public void onAdDismissedFullScreenContent() {
                                 rewardedAd = null;
                                 notifyJsRewardDismissed();
-                                preloadRewardedAd(targetId);
+                                preloadRewardedAd(REWARDED_AD_UNIT_ID);
                             }
 
                             @Override
                             public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
                                 rewardedAd = null;
-                                preloadRewardedAd(targetId);
+                                preloadRewardedAd(REWARDED_AD_UNIT_ID);
                             }
                         });
                         rewardedAd.show(MainActivity.this, rewardItem -> notifyJsRewardEarned());
@@ -264,6 +350,17 @@ public class MainActivity extends Activity {
                 interstitialAd.show(MainActivity.this);
             } else {
                 preloadInterstitialAd(targetId);
+            }
+        });
+    }
+
+    private void notifyJsBannerLoaded() {
+        runOnUiThread(() -> {
+            if (webView != null) {
+                webView.evaluateJavascript(
+                        "window.dispatchEvent(new CustomEvent('admob-banner-loaded'));",
+                        null
+                );
             }
         });
     }
@@ -335,15 +432,21 @@ public class MainActivity extends Activity {
         if (webView != null) {
             webView.onResume();
         }
-        if (bannerAdView != null) {
-            bannerAdView.resume();
+        if (primaryBannerAdView != null) {
+            primaryBannerAdView.resume();
+        }
+        if (fallbackBannerAdView != null) {
+            fallbackBannerAdView.resume();
         }
     }
 
     @Override
     protected void onPause() {
-        if (bannerAdView != null) {
-            bannerAdView.pause();
+        if (primaryBannerAdView != null) {
+            primaryBannerAdView.pause();
+        }
+        if (fallbackBannerAdView != null) {
+            fallbackBannerAdView.pause();
         }
         if (webView != null) {
             webView.onPause();
@@ -353,8 +456,11 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (bannerAdView != null) {
-            bannerAdView.destroy();
+        if (primaryBannerAdView != null) {
+            primaryBannerAdView.destroy();
+        }
+        if (fallbackBannerAdView != null) {
+            fallbackBannerAdView.destroy();
         }
         super.onDestroy();
     }
