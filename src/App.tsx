@@ -14,6 +14,7 @@ import {
 } from './game/RewardedAdModal';
 import { FixedBannerAd } from './game/FixedBannerAd';
 import { InterstitialAdModal } from './game/InterstitialAdModal';
+import { PrivacyPolicyModal } from './game/PrivacyPolicyModal';
 import { sound } from './game/sound';
 import {
   ClassicDifficulty,
@@ -293,6 +294,16 @@ export default function App() {
   const [interstitialAfterAction, setInterstitialAfterAction] = useState<(() => void) | null>(
     null
   );
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState<boolean>(() => {
+    try {
+      return (
+        window.location.hash.toLowerCase().includes('privacy') ||
+        window.location.search.toLowerCase().includes('privacy')
+      );
+    } catch {
+      return false;
+    }
+  });
 
   // Refresh 24-hour reset countdown and auto-rotate missions at midnight
   useEffect(() => {
@@ -629,6 +640,16 @@ export default function App() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playPickup();
+                  setShowPrivacyPolicy(true);
+                }}
+                className="px-3 py-2 rounded-xl bg-[#1A2E75] border border-[#3656BD] text-xs font-semibold text-sky-100 hover:border-sky-300 transition-colors cursor-pointer whitespace-nowrap"
+              >
+                Privacy Policy
+              </button>
               <button
                 type="button"
                 onClick={handleToggleMute}
@@ -972,6 +993,16 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   sound.playPickup();
+                  setShowPrivacyPolicy(true);
+                }}
+                className="w-full py-2.5 px-5 rounded-xl bg-[#15255E] hover:bg-[#1E3482] border border-[#2E4BA8] text-sky-200 font-semibold text-xs transition-colors cursor-pointer whitespace-nowrap"
+              >
+                Privacy Policy & Terms
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playPickup();
                   setScreenState('TITLE');
                 }}
                 className="w-full py-3 px-5 rounded-xl bg-[#111E4F] hover:bg-[#192B6E] text-sky-200 font-semibold text-sm transition-colors cursor-pointer whitespace-nowrap"
@@ -1006,6 +1037,11 @@ export default function App() {
             nextAction();
           }}
         />
+      )}
+
+      {/* PRIVACY POLICY & TERMS MODAL */}
+      {showPrivacyPolicy && (
+        <PrivacyPolicyModal onClose={() => setShowPrivacyPolicy(false)} />
       )}
 
       {/* FIXED-SIZE 320x50 BANNER AD (ca-app-pub-3940256099942544/6300978111) */}
